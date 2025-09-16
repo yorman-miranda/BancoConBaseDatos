@@ -1,7 +1,7 @@
 
 
-from ..entities.cuenta import Cuenta
-from ..database.database import get_session_context
+from entities.cuenta import Cuenta
+from database.config import get_session_context
 
 class CuentaCRUD:
     """

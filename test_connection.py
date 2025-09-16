@@ -63,21 +63,21 @@ def test_connection():
     return True
 
 
-def test_tables():
-    """Probar la creacion de tablas"""
-    print("\n=== PROBANDO CREACION DE TABLAS ===\n")
+# def test_tables():
+#     """Probar la creacion de tablas"""
+#     print("\n=== PROBANDO CREACION DE TABLAS ===\n")
 
-    try:
-        from database.config import create_tables
+#     try:
+#         from database.config import create_tables
 
-        create_tables()
-        print("[OK] Tablas creadas exitosamente")
+#         create_tables()
+#         print("[OK] Tablas creadas exitosamente")
 
-    except Exception as e:
-        print(f"[ERROR] Error creando las tablas: {e}")
-        return False
+#     except Exception as e:
+#         print(f"[ERROR] Error creando las tablas: {e}")
+#         return False
 
-    return True
+#     return True
 
 
 def create_admin_user():

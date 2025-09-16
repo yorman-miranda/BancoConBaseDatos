@@ -1,7 +1,7 @@
 
 
-from ..entities.transaccion import Transaccion
-from ..database.database import get_session_context
+from entities.transaccion import Transaccion
+from database.config import get_session_context
 
 class TransaccionCRUD:
     """

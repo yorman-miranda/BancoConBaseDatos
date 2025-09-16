@@ -1,6 +1,6 @@
 
-from ..entities.cliente import Cliente
-from ..database.database import get_session_context
+from entities.cliente import Cliente
+from database.config import get_session_context
 
 class ClienteCRUD:
     """

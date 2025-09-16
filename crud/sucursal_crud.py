@@ -1,7 +1,7 @@
 
 
-from ..entities.sucursal import Sucursal
-from ..database.database import get_session_context
+from entities.sucursal import Sucursal
+from database.config import get_session_context
 
 class SucursalCRUD:
     """

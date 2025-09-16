@@ -1,7 +1,7 @@
 
 from datetime import datetime
-from ..entities.user import User
-from ..database.database import get_session_context
+from entities.user import User
+from database.config import get_session_context
 
 class UserCRUD:
     """
