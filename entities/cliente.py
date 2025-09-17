@@ -1,14 +1,8 @@
-"""
-Entidad Cliente
-===============
 
-Este módulo define la entidad Cliente y sus modelos Pydantic.
-"""
 
-from sqlalchemy import Column, Integer, String, ForeignKey,DateTime,func
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from database.base import Base
 
 class Cliente(Base):
     """

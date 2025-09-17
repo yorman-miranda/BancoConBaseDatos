@@ -131,13 +131,13 @@ if __name__ == "__main__":
     if test_connection():
         print("\n" + "=" * 50)
         # Probar creacion de tablas
-        if test_tables():
-            print("\n" + "=" * 50)
+        # if test_tables():
+        #     print("\n" + "=" * 50)
 
-        print("\n[SUCCESS] Configuracion completada!")
-        print("Ahora puedes ejecutar:")
-        print("  python main.py")
-        print("  python ejemplo_basico.py")
+        # print("\n[SUCCESS] Configuracion completada!")
+        # print("Ahora puedes ejecutar:")
+        # print("  python main.py")
+        # print("  python ejemplo_basico.py")
     else:
         print("\n[ERROR] No se pudo establecer la conexion")
         sys.exit(1)

@@ -8,9 +8,14 @@ para gestionar todas las entidades del sistema bancario.
 
 import sys
 from datetime import datetime
-from crud import *
-from database import create_tables, check_connection
-from entities import *
+from crud.cliente_crud import ClienteCRUD
+from crud.cuenta_curd import CuentaCRUD
+from crud.empleado_crud import EmpleadoCRUD
+from crud.sucursal_crud import SucursalCRUD
+from crud.transaccion_crud import TransaccionCRUD
+from crud.user_crud import UserCRUD
+from database.config import create_tables, check_connection 
+# from entities import *
 
 
 class MenuSistemaBancario:
@@ -332,6 +337,7 @@ def main():
     """Función principal que inicia el sistema"""
     try:
         menu = MenuSistemaBancario()
+        
         menu.mostrar_menu_principal()
     except KeyboardInterrupt:
         print("\n\nPrograma interrumpido por el usuario.")

@@ -1,8 +1,8 @@
 
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from datetime import datetime
-from sqlalchemy.ext.declarative import declarative_base
-Base = declarative_base()
+from database.base import Base
+
 class User(Base):
     """
     Entidad User: representa un usuario del sistema.
