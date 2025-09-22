@@ -1,7 +1,9 @@
-
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 from datetime import datetime
-from database.base import Base
+from database.config import Base
+
 
 class User(Base):
     """
@@ -9,18 +11,25 @@ class User(Base):
     Incluye datos personales, credenciales de acceso
     y campos de auditoría.
     """
+
     __tablename__ = "users"
 
-    idUser = Column(Integer, primary_key=True, autoincrement=True)
+    idUser = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     firstName = Column(String(100), nullable=False)
     lastName = Column(String(100), nullable=False)
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
+    activo = Column(Boolean, default=True)  # <-- New
+    es_admin = Column(Boolean, default=False)  # <-- New
 
-    createdBy = Column(Integer, ForeignKey("users.idUser"), nullable=False)
-    updatedBy = Column(Integer, ForeignKey("users.idUser"), nullable=True)
-    createdAt = Column(DateTime, default=datetime.now, nullable=False)
-    updatedAt = Column(DateTime, default=None, onupdate=datetime.now)
+    id_usuario_creacion = Column(
+        UUID(as_uuid=True), ForeignKey("users.idUser"), nullable=False
+    )
+    id_usuario_edicion = Column(
+        UUID(as_uuid=True), ForeignKey("users.idUser"), nullable=True
+    )
+    fecha_creacion = Column(DateTime, default=datetime.now, nullable=False)
+    fecha_actualizacion = Column(DateTime, default=None, onupdate=datetime.now)
 
     def __repr__(self):
         return f"<User {self.firstName} {self.lastName} ({self.username})>"
