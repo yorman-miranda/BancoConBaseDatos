@@ -15,7 +15,7 @@ from auth.security import PasswordManager
 from banco import Banco
 
 from crud.cliente_crud import ClienteCRUD
-from crud.cuenta_crud import CuentaCRUD
+from crud.cuenta_curd import CuentaCRUD
 from crud.empleado_crud import EmpleadoCRUD
 from crud.sucursal_crud import SucursalCRUD
 from crud.transaccion_crud import TransaccionCRUD
