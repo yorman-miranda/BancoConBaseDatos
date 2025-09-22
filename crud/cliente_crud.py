@@ -1,6 +1,7 @@
-
 from entities.cliente import Cliente
-from database.config import get_session_context
+from database.config import get_session
+import uuid
+
 
 class ClienteCRUD:
     """
@@ -9,11 +10,21 @@ class ClienteCRUD:
     """
 
     @staticmethod
-    def create(nombre, documento, telefono, direccion, email, idUsuario, idSucursal=None):
+    def create(
+        nombre,
+        documento,
+        telefono,
+        direccion,
+        email,
+        idUsuario,
+        idSucursal,
+        id_usuario_creacion,
+    ):
         """
         Crea un nuevo cliente en la base de datos.
         """
-        with get_session_context() as session:
+        session = get_session()
+        try:
             cliente = Cliente(
                 nombre=nombre,
                 documento=documento,
@@ -21,53 +32,80 @@ class ClienteCRUD:
                 direccion=direccion,
                 email=email,
                 idUsuario=idUsuario,
-                idSucursal=idSucursal
+                idSucursal=idSucursal,
+                id_usuario_creacion=id_usuario_creacion,
             )
             session.add(cliente)
-            session.flush()
+            session.commit()
             session.refresh(cliente)
             return cliente
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     @staticmethod
     def get_by_id(cliente_id):
         """
         Obtiene un cliente por su ID.
         """
-        with get_session_context() as session:
+        session = get_session()
+        try:
             return session.query(Cliente).filter_by(idCliente=cliente_id).first()
+        finally:
+            session.close()
 
     @staticmethod
     def get_all():
         """
         Obtiene todos los clientes registrados.
         """
-        with get_session_context() as session:
+        session = get_session()
+        try:
             return session.query(Cliente).all()
+        finally:
+            session.close()
 
     @staticmethod
-    def update(cliente_id, **kwargs):
+    def update(cliente_id, id_usuario_edicion, **kwargs):
         """
         Actualiza los datos de un cliente.
         """
-        with get_session_context() as session:
+        session = get_session()
+        try:
             cliente = session.query(Cliente).filter_by(idCliente=cliente_id).first()
             if not cliente:
                 return None
             for key, value in kwargs.items():
                 if hasattr(cliente, key):
                     setattr(cliente, key, value)
-            session.flush()
+
+            cliente.id_usuario_edicion = id_usuario_edicion
+            session.commit()
             session.refresh(cliente)
             return cliente
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     @staticmethod
     def delete(cliente_id):
         """
         Elimina un cliente de la base de datos.
         """
-        with get_session_context() as session:
+        session = get_session()
+        try:
             cliente = session.query(Cliente).filter_by(idCliente=cliente_id).first()
             if not cliente:
                 return False
             session.delete(cliente)
+            session.commit()
             return True
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
