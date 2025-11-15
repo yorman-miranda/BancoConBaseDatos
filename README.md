@@ -193,6 +193,3 @@ python .\main.py # escribir este codigo en la terminal y ahi mismo el main suelt
 
 ---
 
-
-
-
