@@ -18,7 +18,7 @@ class AuthSystem:
         return UserCRUD.authenticate(username, password)
 
     @staticmethod
-    def register(firstName, lastName, username, password, id_usuario_creacion):
+    def register(firstName, lastName, username, password, id_usuario_creacion=None):
         """
         Registra un nuevo usuario.
         """

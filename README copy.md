@@ -1,6 +1,3 @@
-
-# bancoProgramacionDeSoftware
-=======
 # 🏦 Sistema Bancario - Documentación Completa
 
 ## 📋 Descripción del Proyecto
@@ -193,3 +190,6 @@ python .\main.py # escribir este codigo en la terminal y ahi mismo el main suelt
 - **python-dotenv**
 - **bcrypt**
 - **python-multipart**
+
+---
+
