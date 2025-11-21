@@ -37,3 +37,4 @@ class Transaccion(Base):
 
     def __repr__(self):
         return f"<Transacción {self.tipo} - Monto: {self.monto}>"
+

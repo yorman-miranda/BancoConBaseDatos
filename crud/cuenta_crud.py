@@ -1,4 +1,3 @@
-
 from entities.cuenta import Cuenta
 from database.config import get_session
 from sqlalchemy.orm import Session
@@ -107,36 +106,43 @@ class CuentaCRUD:
 
     @staticmethod
     def _update_balance(
-        session: Session,
         cuenta_id: uuid.UUID,
         monto_cambio: float,
         id_usuario_edicion: uuid.UUID,
+        session: Session = None,  # ← NUEVO PARÁMETRO
     ):
         """
         Método INTERNO para actualizar el saldo de una cuenta.
         DEBE ser llamado dentro de una sesión de transacción existente.
         """
-        cuenta = (
-            session.query(Cuenta)
-            .filter_by(idCuenta=cuenta_id)
-            .with_for_update()
-            .first()
-        )
-        if not cuenta:
-            raise ValueError("Cuenta no encontrada.")
-
-        nuevo_saldo = cuenta.saldo + monto_cambio
-
-        if monto_cambio < 0 and nuevo_saldo < 0:
-            raise ValueError(
-                f"Saldo insuficiente. Saldo actual: {cuenta.saldo:,.2f}. Monto a retirar: {-monto_cambio:,.2f}."
+        session_to_use = session if session else get_session()
+        try:
+            cuenta = (
+                session_to_use.query(Cuenta)
+                .filter_by(idCuenta=cuenta_id)
+                .with_for_update()
+                .first()
             )
+            if not cuenta:
+                raise ValueError("Cuenta no encontrada.")
 
-        cuenta.saldo = nuevo_saldo
-        cuenta.id_usuario_edicion = id_usuario_edicion
-        cuenta.fecha_actualizacion = datetime.now()
-        session.flush()
-        return cuenta
+            nuevo_saldo = cuenta.saldo + monto_cambio
+
+            if monto_cambio < 0 and nuevo_saldo < 0:
+                raise ValueError(
+                    f"Saldo insuficiente. Saldo actual: {cuenta.saldo:,.2f}. Monto a retirar: {-monto_cambio:,.2f}."
+                )
+
+            cuenta.saldo = nuevo_saldo
+            cuenta.id_usuario_edicion = id_usuario_edicion
+            cuenta.fecha_actualizacion = datetime.now()
+
+            if not session:  # ← SOLO flush si es sesión propia
+                session_to_use.flush()
+            return cuenta
+        finally:
+            if not session:  # ← SOLO cerrar si es sesión propia
+                session_to_use.close()
 
     @staticmethod
     def delete(cuenta_id: uuid.UUID):

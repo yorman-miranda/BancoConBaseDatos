@@ -2,6 +2,7 @@ from entities.transaccion import Transaccion
 from database.config import get_session
 from sqlalchemy.orm import Session
 from datetime import datetime
+from crud import CuentaCRUD
 import uuid
 
 
@@ -47,6 +48,24 @@ class TransaccionCRUD:
         Es clave para asegurar la atomicidad de las operaciones bancarias.
         """
         try:
+            # Determinar el monto de cambio según el tipo de transacción
+            if tipo == "DEPOSITO":
+                monto_cambio = monto
+            elif tipo == "RETIRO":
+                monto_cambio = -monto
+            else:
+                # Para transferencias y otros tipos, usar monto positivo por defecto
+                monto_cambio = monto
+
+            # Actualizar el saldo usando la MISMA sesión
+            cuenta_actualizada = CuentaCRUD._update_balance(
+                session=session,
+                cuenta_id=idCuenta,
+                monto_cambio=monto_cambio,
+                id_usuario_edicion=id_usuario_creacion,
+            )
+
+            # Crear la transacción
             transaccion = Transaccion(
                 tipo=tipo,
                 monto=monto,
@@ -56,7 +75,9 @@ class TransaccionCRUD:
             session.add(transaccion)
             session.flush()  # Guarda en la sesión, pero no hace COMMIT
             return transaccion
+
         except Exception as e:
+            # Re-lanzar la excepción para que el llamador haga rollback
             raise e
 
     @staticmethod
