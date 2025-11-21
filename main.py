@@ -26,16 +26,52 @@ async def lifespan(app: FastAPI):
     print("🚀 Iniciando Sistema Bancario API...")
     print("📊 Configurando base de datos...")
 
-    # Aquí podrías inicializar datos por defecto si es necesario
-    from database.config import create_tables
+    # Crear usuario administrador por defecto si no existe
+    from crud.user_crud import UserCRUD
 
-    create_tables()
+    admin_user = UserCRUD.get_by_username("admin")
+    if not admin_user:
+        print("👑 Creando usuario administrador...")
+        try:
+            # Crear admin con id_usuario_creacion=None (ahora permitido)
+            admin_user = UserCRUD.create(
+                firstName="Administrador",
+                lastName="Sistema",
+                username="admin",
+                password="Admin.123",
+                id_usuario_creacion=None,  # Ahora es nullable
+                activo=True,
+                es_admin=True,
+            )
+            print(f"✅ Usuario administrador creado: {admin_user.username}")
+        except Exception as e:
+            print(f"❌ Error creando usuario administrador: {e}")
+    else:
+        print("👑 Usuario administrador ya existe.")
 
     print("✅ Sistema listo para usar.")
     print("📚 Documentación disponible en: http://localhost:8000/docs")
     yield
     # Shutdown
     print("👋 Cerrando Sistema Bancario API...")
+
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # Startup
+#     print("🚀 Iniciando Sistema Bancario API...")
+#     print("📊 Configurando base de datos...")
+
+#     # Aquí podrías inicializar datos por defecto si es necesario
+#     from database.config import create_tables
+
+#      create_tables()
+
+#     print("✅ Sistema listo para usar.")
+#     print("📚 Documentación disponible en: http://localhost:8000/docs")
+#     yield
+#     # Shutdown
+#     print("👋 Cerrando Sistema Bancario API...")
 
 
 # Crear la aplicación FastAPI con lifespan
@@ -100,3 +136,4 @@ if __name__ == "__main__":
         reload=True,
         log_level="info",
     )
+

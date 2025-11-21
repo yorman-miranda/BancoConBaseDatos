@@ -23,7 +23,7 @@ class User(Base):
     es_admin = Column(Boolean, default=False)  # <-- New
 
     id_usuario_creacion = Column(
-        UUID(as_uuid=True), ForeignKey("users.idUser"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.idUser"), nullable=True
     )
     id_usuario_edicion = Column(
         UUID(as_uuid=True), ForeignKey("users.idUser"), nullable=True
@@ -33,3 +33,4 @@ class User(Base):
 
     def __repr__(self):
         return f"<User {self.firstName} {self.lastName} ({self.username})>"
+

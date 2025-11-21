@@ -7,7 +7,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database.config import get_db
-from crud import TransaccionCRUD
+from crud import TransaccionCRUD, CuentaCRUD
+from auth.dependencies import get_current_user, get_current_admin
 from schemas import (
     TransaccionResponse,
     TransaccionCreate,
@@ -20,7 +21,10 @@ router = APIRouter(prefix="/transacciones", tags=["transacciones"])
 
 @router.get("/", response_model=List[TransaccionResponse])
 async def obtener_transacciones(
-    skip: int = 0, limit: int = 100, db: Session = Depends(get_db)
+    skip: int = 0,
+    limit: int = 100,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Obtener todas las transacciones con paginación."""
     try:
@@ -34,7 +38,11 @@ async def obtener_transacciones(
 
 
 @router.get("/{transaccion_id}", response_model=TransaccionResponse)
-async def obtener_transaccion(transaccion_id: UUID, db: Session = Depends(get_db)):
+async def obtener_transaccion(
+    transaccion_id: UUID,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """Obtener una transacción por ID."""
     try:
         transaccion = TransaccionCRUD.get_by_id(transaccion_id)
@@ -55,7 +63,9 @@ async def obtener_transaccion(transaccion_id: UUID, db: Session = Depends(get_db
 
 @router.get("/cuenta/{cuenta_id}", response_model=List[TransaccionResponse])
 async def obtener_transacciones_por_cuenta(
-    cuenta_id: UUID, db: Session = Depends(get_db)
+    cuenta_id: UUID,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Obtener transacciones por cuenta."""
     try:
@@ -72,20 +82,37 @@ async def obtener_transacciones_por_cuenta(
     "/", response_model=TransaccionResponse, status_code=status.HTTP_201_CREATED
 )
 async def crear_transaccion(
-    transaccion_data: TransaccionCreate, db: Session = Depends(get_db)
+    transaccion_data: TransaccionCreate,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """Crear una nueva transacción."""
     try:
-        transaccion = TransaccionCRUD.create(
+        # Verificar que la cuenta existe
+        cuenta = CuentaCRUD.get_by_id(transaccion_data.idCuenta)
+        if not cuenta:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Cuenta no encontrada"
+            )
+
+        # Usar create_with_session para atomicidad
+        transaccion = TransaccionCRUD.create_with_session(
+            session=db,
             tipo=transaccion_data.tipo,
             monto=transaccion_data.monto,
             idCuenta=transaccion_data.idCuenta,
-            id_usuario_creacion=UUID(
-                "00000000-0000-0000-0000-000000000000"
-            ),  # Admin por defecto
+            id_usuario_creacion=current_user.idUser,
         )
+
+        # Hacer commit de la transacción completa
+        db.commit()
         return transaccion
+
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al crear transacción: {str(e)}",
@@ -96,11 +123,11 @@ async def crear_transaccion(
 async def actualizar_transaccion(
     transaccion_id: UUID,
     transaccion_data: TransaccionUpdate,
+    current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Actualizar una transacción existente."""
     try:
-        # Verificar que la transacción existe
         transaccion_existente = TransaccionCRUD.get_by_id(transaccion_id)
         if not transaccion_existente:
             raise HTTPException(
@@ -108,9 +135,10 @@ async def actualizar_transaccion(
                 detail="Transacción no encontrada",
             )
 
-        # Filtrar campos None para actualización
         campos_actualizacion = {
-            k: v for k, v in transaccion_data.dict().items() if v is not None
+            k: v
+            for k, v in transaccion_data.dict(exclude_unset=True).items()
+            if v is not None
         }
 
         if not campos_actualizacion:
@@ -118,7 +146,7 @@ async def actualizar_transaccion(
 
         transaccion_actualizada = TransaccionCRUD.update(
             transaccion_id,
-            id_usuario_edicion=transaccion_existente.id_usuario_creacion,
+            id_usuario_edicion=current_user.idUser,  # ID del usuario que modifica
             **campos_actualizacion,
         )
         return transaccion_actualizada
@@ -132,10 +160,13 @@ async def actualizar_transaccion(
 
 
 @router.delete("/{transaccion_id}", response_model=RespuestaAPI)
-async def eliminar_transaccion(transaccion_id: UUID, db: Session = Depends(get_db)):
-    """Eliminar una transacción."""
+async def eliminar_transaccion(
+    transaccion_id: UUID,
+    current_user=Depends(get_current_admin),  # Solo admin
+    db: Session = Depends(get_db),
+):
+    """Eliminar una transacción (solo administradores)."""
     try:
-        # Verificar que la transacción existe
         transaccion_existente = TransaccionCRUD.get_by_id(transaccion_id)
         if not transaccion_existente:
             raise HTTPException(
