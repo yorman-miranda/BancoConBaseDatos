@@ -33,3 +33,4 @@ class User(Base):
 
     def __repr__(self):
         return f"<User {self.firstName} {self.lastName} ({self.username})>"
+
