@@ -1,7 +1,3 @@
-"""
-API de Operaciones Bancarias - Endpoints para operaciones específicas del banco
-"""
-
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -21,39 +17,31 @@ async def realizar_deposito(
 ):
     """Realizar un depósito en una cuenta."""
     try:
-        cuenta = CuentaCRUD.get_by_id(operacion.idCuenta)
-        if not cuenta:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Cuenta no encontrada"
-            )
-
-        # Crear transacción de depósito
-        transaccion = TransaccionCRUD.create(
+        # Usar create_with_session para atomicidad
+        transaccion = TransaccionCRUD.create_with_session(
+            session=db,
             tipo="DEPOSITO",
             monto=operacion.monto,
             idCuenta=operacion.idCuenta,
-            id_usuario_creacion=current_user.idUser,  # ID del usuario logueado
+            id_usuario_creacion=current_user.idUser,
         )
 
-        # Actualizar saldo de la cuenta
-        nuevo_saldo = cuenta.saldo + operacion.monto
-        CuentaCRUD.update(
-            operacion.idCuenta,
-            id_usuario_edicion=current_user.idUser,
-            saldo=nuevo_saldo,
-        )
+        db.commit()
 
         return RespuestaAPI(
             mensaje=f"Depósito de {operacion.monto} realizado exitosamente",
             exito=True,
             datos={
-                "nuevo_saldo": nuevo_saldo,
                 "transaccion_id": str(transaccion.idTransaccion),
             },
         )
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al realizar depósito: {str(e)}",
@@ -68,44 +56,31 @@ async def realizar_retiro(
 ):
     """Realizar un retiro de una cuenta."""
     try:
-        cuenta = CuentaCRUD.get_by_id(operacion.idCuenta)
-        if not cuenta:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Cuenta no encontrada"
-            )
-
-        if cuenta.saldo < operacion.monto:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Fondos insuficientes"
-            )
-
-        # Crear transacción de retiro
-        transaccion = TransaccionCRUD.create(
+        # Usar create_with_session para atomicidad
+        transaccion = TransaccionCRUD.create_with_session(
+            session=db,
             tipo="RETIRO",
             monto=operacion.monto,
             idCuenta=operacion.idCuenta,
-            id_usuario_creacion=current_user.idUser,  # ID del usuario logueado
+            id_usuario_creacion=current_user.idUser,
         )
 
-        # Actualizar saldo de la cuenta
-        nuevo_saldo = cuenta.saldo - operacion.monto
-        CuentaCRUD.update(
-            operacion.idCuenta,
-            id_usuario_edicion=current_user.idUser,
-            saldo=nuevo_saldo,
-        )
+        db.commit()
 
         return RespuestaAPI(
             mensaje=f"Retiro de {operacion.monto} realizado exitosamente",
             exito=True,
             datos={
-                "nuevo_saldo": nuevo_saldo,
                 "transaccion_id": str(transaccion.idTransaccion),
             },
         )
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al realizar retiro: {str(e)}",

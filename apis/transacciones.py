@@ -7,7 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database.config import get_db
-from crud import TransaccionCRUD
+from crud import TransaccionCRUD, CuentaCRUD
 from auth.dependencies import get_current_user, get_current_admin
 from schemas import (
     TransaccionResponse,
@@ -88,14 +88,31 @@ async def crear_transaccion(
 ):
     """Crear una nueva transacción."""
     try:
-        transaccion = TransaccionCRUD.create(
+        # Verificar que la cuenta existe
+        cuenta = CuentaCRUD.get_by_id(transaccion_data.idCuenta)
+        if not cuenta:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Cuenta no encontrada"
+            )
+
+        # Usar create_with_session para atomicidad
+        transaccion = TransaccionCRUD.create_with_session(
+            session=db,
             tipo=transaccion_data.tipo,
             monto=transaccion_data.monto,
             idCuenta=transaccion_data.idCuenta,
-            id_usuario_creacion=current_user.idUser,  # ID del usuario logueado
+            id_usuario_creacion=current_user.idUser,
         )
+
+        # Hacer commit de la transacción completa
+        db.commit()
         return transaccion
+
+    except ValueError as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al crear transacción: {str(e)}",
